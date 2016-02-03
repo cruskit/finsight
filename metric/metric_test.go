@@ -50,10 +50,6 @@ func TestReadFromYahooCsv(t *testing.T) {
 		Metric{d4, 1939.380005},
 	}
 
-	if len(metric) != 4 {
-		t.Error("Expected 4 values, got ", len(metric))
-	}
-
 	if !reflect.DeepEqual(expected, metric) {
 		t.Error("Expected ", expected, " got ", metric)
 	}
