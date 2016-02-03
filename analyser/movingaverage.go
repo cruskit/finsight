@@ -4,7 +4,9 @@ import (
 	"github.com/cruskit/finsight/metric"
 )
 
-func MovingAverage(period int, metrics []metric.Metric) []metric.Metric {
+func MovingAverage(period int, metricsPtr *[]metric.Metric) []metric.Metric {
+
+	metrics := *metricsPtr
 
 	// Ensure we have enough values to actually average
 	if period > len(metrics) {

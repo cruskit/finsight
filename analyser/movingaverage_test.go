@@ -15,7 +15,7 @@ func TestMovingAvgWithNotEnoughValues(t *testing.T) {
 		metric.Metric{ time.Now(), 3.},
 	}
 
-	result := MovingAverage(3, vals)
+	result := MovingAverage(3, &vals)
 
 	if result != nil {
 		t.Error("Expected nil, got", vals)
@@ -33,7 +33,7 @@ func TestMovingAverageMultipleValues(t *testing.T){
 		metric.Metric{now.AddDate(0,-1,0), 3.} ,
 	}
 
-	result := MovingAverage(2, vals)
+	result := MovingAverage(2, &vals)
 
 	expectedResult := []metric.Metric{
 		metric.Metric{now.AddDate(0,-2,0), 1.5} ,
@@ -56,7 +56,7 @@ func TestMovingAverageWithOneResult(t *testing.T){
 		metric.Metric{now.AddDate(0,-1,0), 3.} ,
 	}
 
-	result := MovingAverage(3, vals)
+	result := MovingAverage(3, &vals)
 
 	expectedResult := []metric.Metric{
 		metric.Metric{now.AddDate(0,-1,0), 2.0} ,
