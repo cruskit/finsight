@@ -12,6 +12,14 @@ type StrategyOutcomes struct {
 	PurchaseDates [] time.Time
 	SellDates     [] time.Time
 	FinalValue    float64
+	Positions     [] Position
+}
+
+type Position struct {
+	date     time.Time
+	numUnits float64
+	cash     float64
+
 }
 
 func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, dataFile string) *StrategyOutcomes {
@@ -26,7 +34,7 @@ func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, dataFile st
 	fmt.Println("Buy", buyDates)
 	fmt.Println("Sell", sellDates)
 
-	outComes := StrategyOutcomes{*buyDates, *sellDates, 0.0}
+	outComes := StrategyOutcomes{*buyDates, *sellDates, 0.0, make([]Position, 0)}
 	calculateStrategyValue(&outComes, pricesPtr)
 
 	return &outComes
@@ -42,9 +50,6 @@ func calculateMovingAverageTxDates(fastAvgPeriod int, slowAvgPeriod int, pricesP
 	// Make the avgs start on the same date
 	fastAvg = fastAvg[slowAvgPeriod - fastAvgPeriod:]
 
-	fmt.Println("first fast avg: ", fastAvg[0])
-	fmt.Println("first slow avg: ", slowAvg[0])
-
 	// Work out the buy and sell dates
 	buy := make([]time.Time, 0)
 	sell := make([]time.Time, 0)
@@ -59,7 +64,6 @@ func calculateMovingAverageTxDates(fastAvgPeriod int, slowAvgPeriod int, pricesP
 			// High to low crossover - sell, can only sell if we've previously bought
 			sell = append(sell, fastAvg[i].Time)
 		}
-
 	}
 
 	return &buy, &sell
@@ -83,8 +87,9 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 			if ((*outcomesPtr).PurchaseDates[i].Equal((*pricesPtr)[j].Time)) {
 				foundBuyPrice = true
 				numShares = value / (*pricesPtr)[j].Value
-				fmt.Printf("%v Shares units at %v for %v on %v\n",
+				fmt.Printf("%v units purchased at %v for %v on %v\n",
 					numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
+				(*outcomesPtr).Positions = append((*outcomesPtr).Positions, Position{(*pricesPtr)[j].Time, numShares, 0})
 			}
 		}
 		if !foundBuyPrice {
@@ -102,6 +107,7 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 					value = numShares * (*pricesPtr)[j].Value
 					fmt.Printf("%v units sold at %v for %v on %v\n",
 						numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
+					(*outcomesPtr).Positions = append((*outcomesPtr).Positions, Position{(*pricesPtr)[j].Time, 0, value})
 				}
 			}
 			if !foundSellPrice {
