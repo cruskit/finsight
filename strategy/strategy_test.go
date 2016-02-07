@@ -49,6 +49,8 @@ func TestCalculateStrategyValueWithEqualBuysAndSells(t *testing.T) {
 	}
 }
 
+
+
 func TestCalculateStrategyValueWithoutFinalSell(t *testing.T) {
 
 	buys := []time.Time{
@@ -99,31 +101,30 @@ func TestMovingAverageTxDatesWithNoTransactionResults(t *testing.T) {
 		metric.Metric{time.Date(2016, time.January, 7, 0, 0, 0, 0, time.UTC), 7},
 	}
 
-	buys, sells := calculateMovingAverageTxDates(2, 3, &prices)
+	buys, sells := calculateMovingAverageTxDates(2, 3, time.Time{}, &prices)
 	if (len(*buys) > 0 || len(*sells) > 0){
 		t.Error("Expected no transactions, got: ", buys, sells)
 	}
 }
 
-func TestMovingAverageTxDates(t *testing.T) {
+func TestMovingAverageBuySellTxDates(t *testing.T) {
 
 	prices := []metric.Metric{
 		metric.Metric{time.Date(2016, time.January, 1, 0, 0, 0, 0, time.UTC), 3},
 		metric.Metric{time.Date(2016, time.January, 2, 0, 0, 0, 0, time.UTC), 2},
 		metric.Metric{time.Date(2016, time.January, 3, 0, 0, 0, 0, time.UTC), 1},
-		metric.Metric{time.Date(2016, time.January, 4, 0, 0, 0, 0, time.UTC), 5},
+		metric.Metric{time.Date(2016, time.January, 4, 0, 0, 0, 0, time.UTC), 4}, // buy - before date
 		metric.Metric{time.Date(2016, time.January, 5, 0, 0, 0, 0, time.UTC), 1},
-		metric.Metric{time.Date(2016, time.January, 6, 0, 0, 0, 0, time.UTC), 5},
-		metric.Metric{time.Date(2016, time.January, 7, 0, 0, 0, 0, time.UTC), 5},
-		metric.Metric{time.Date(2016, time.January, 8, 0, 0, 0, 0, time.UTC), 1},
-		metric.Metric{time.Date(2016, time.January, 9, 0, 0, 0, 0, time.UTC), 2},
-		metric.Metric{time.Date(2016, time.January, 10, 0, 0, 0, 0, time.UTC), 1},
+		metric.Metric{time.Date(2016, time.January, 6, 0, 0, 0, 0, time.UTC), 4}, // sell
+		metric.Metric{time.Date(2016, time.January, 7, 0, 0, 0, 0, time.UTC), 1}, // buy
+		metric.Metric{time.Date(2016, time.January, 8, 0, 0, 0, 0, time.UTC), 4}, // sell
+		metric.Metric{time.Date(2016, time.January, 9, 0, 0, 0, 0, time.UTC), 1}, // buy
 	}
 
 	expectedBuys := []time.Time{
 		time.Date(2016, time.January, 4, 0, 0, 0, 0, time.UTC),
 		time.Date(2016, time.January, 7, 0, 0, 0, 0, time.UTC),
-		time.Date(2016, time.January, 10, 0, 0, 0, 0, time.UTC),
+		time.Date(2016, time.January, 9, 0, 0, 0, 0, time.UTC),
 	}
 	expectedSells := []time.Time{
 		time.Date(2016, time.January, 6, 0, 0, 0, 0, time.UTC),
@@ -131,11 +132,45 @@ func TestMovingAverageTxDates(t *testing.T) {
 	}
 
 
-	buys, sells := calculateMovingAverageTxDates(2, 3, &prices)
-	if (reflect.DeepEqual(expectedBuys, buys)){
-		t.Error("Expected buys of %v, got: %v", expectedBuys, buys)
+	buys, sells := calculateMovingAverageTxDates(2, 3, time.Time{}, &prices)
+	if (!reflect.DeepEqual(expectedBuys, *buys)){
+		t.Errorf("Expected buys of \n%v, \ngot: \n%v", expectedBuys, buys)
 	}
-	if (reflect.DeepEqual(expectedSells, sells)){
-		t.Error("Expected sells of %v, got: %v", expectedSells, sells)
+	if (!reflect.DeepEqual(expectedSells, *sells)){
+		t.Errorf("Expected sells of \n%v, \ngot: \n%v", expectedSells, sells)
 	}
+}
+
+
+func TestMovingAverageBuySellWithStartDate(t *testing.T) {
+
+	prices := []metric.Metric{
+		metric.Metric{time.Date(2016, time.January, 1, 0, 0, 0, 0, time.UTC), 3},
+		metric.Metric{time.Date(2016, time.January, 2, 0, 0, 0, 0, time.UTC), 2},
+		metric.Metric{time.Date(2016, time.January, 3, 0, 0, 0, 0, time.UTC), 1},
+		metric.Metric{time.Date(2016, time.January, 4, 0, 0, 0, 0, time.UTC), 4}, // buy - before date
+		metric.Metric{time.Date(2016, time.January, 5, 0, 0, 0, 0, time.UTC), 1},
+		metric.Metric{time.Date(2016, time.January, 6, 0, 0, 0, 0, time.UTC), 4}, // sell
+		metric.Metric{time.Date(2016, time.January, 7, 0, 0, 0, 0, time.UTC), 1}, // buy
+		metric.Metric{time.Date(2016, time.January, 8, 0, 0, 0, 0, time.UTC), 4}, // sell
+		metric.Metric{time.Date(2016, time.January, 9, 0, 0, 0, 0, time.UTC), 1}, // buy
+	}
+
+	expectedBuys := []time.Time{
+		time.Date(2016, time.January, 7, 0, 0, 0, 0, time.UTC),
+		time.Date(2016, time.January, 9, 0, 0, 0, 0, time.UTC),
+	}
+	expectedSells := []time.Time{
+		time.Date(2016, time.January, 8, 0, 0, 0, 0, time.UTC),
+	}
+
+
+	buys, sells := calculateMovingAverageTxDates(2, 3, time.Date(2016, time.January, 5, 0, 0, 0, 0, time.UTC), &prices)
+	if (!reflect.DeepEqual(expectedBuys, *buys)){
+		t.Errorf("Expected buys of \n%v, \ngot: \n%v", expectedBuys, buys)
+	}
+	if (!reflect.DeepEqual(expectedSells, *sells)){
+		t.Errorf("Expected sells of \n%v, \ngot: \n%v", expectedSells, sells)
+	}
+
 }

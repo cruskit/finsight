@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/cruskit/finsight/strategy"
+	"time"
 )
 
 func main() {
@@ -32,5 +33,5 @@ func main() {
 	//		fmt.Println("Value: ", val)
 	//	}
 
-	strategy.RunMovingAverageCrossover(2, 3, "sampledata/movingaveragestrategy_test_data.csv")
+	strategy.RunMovingAverageCrossover(2, 3, time.Time{}, "sampledata/movingaveragestrategy_test_data.csv")
 }

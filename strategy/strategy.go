@@ -22,14 +22,14 @@ type Position struct {
 
 }
 
-func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, dataFile string) *StrategyOutcomes {
+func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, firstAllowedBuyDate time.Time, dataFile string) *StrategyOutcomes {
 
 	// Get the stock data
 	pricesPtr := metric.ReadMetricFromYahooCsv(dataFile)
 
 	fmt.Println(pricesPtr)
 
-	buyDates, sellDates := calculateMovingAverageTxDates(fastAvgPeriod, slowAvgPeriod, pricesPtr)
+	buyDates, sellDates := calculateMovingAverageTxDates(fastAvgPeriod, slowAvgPeriod, firstAllowedBuyDate, pricesPtr)
 
 	fmt.Println("Buy", buyDates)
 	fmt.Println("Sell", sellDates)
@@ -42,7 +42,7 @@ func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, dataFile st
 
 // calculateMovingAverageTxDates determines the buy and sell dates for a unit based on moving average crossovers
 // it returns the buyDates and the sellDates
-func calculateMovingAverageTxDates(fastAvgPeriod int, slowAvgPeriod int, pricesPtr *[]metric.Metric) (*[]time.Time, *[]time.Time) {
+func calculateMovingAverageTxDates(fastAvgPeriod int, slowAvgPeriod int, firstAllowedBuyDate time.Time, pricesPtr *[]metric.Metric) (*[]time.Time, *[]time.Time) {
 
 	fastAvg := analyser.MovingAverage(fastAvgPeriod, pricesPtr)
 	slowAvg := analyser.MovingAverage(slowAvgPeriod, pricesPtr)
@@ -56,7 +56,9 @@ func calculateMovingAverageTxDates(fastAvgPeriod int, slowAvgPeriod int, pricesP
 
 	for i := 1; i < len(fastAvg); i++ {
 
-		if fastAvg[i].Value > slowAvg[i].Value && fastAvg[i - 1].Value < slowAvg[i - 1].Value {
+		if fastAvg[i].Value > slowAvg[i].Value &&
+		fastAvg[i - 1].Value < slowAvg[i - 1].Value &&
+		( firstAllowedBuyDate.Before(fastAvg[i].Time) || firstAllowedBuyDate.Equal(fastAvg[i].Time) ) {
 			// Low to high crossover - buy
 			buy = append(buy, fastAvg[i].Time)
 
