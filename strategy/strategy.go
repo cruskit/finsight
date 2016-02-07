@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cruskit/finsight/analyser"
 	"log"
+	"strconv"
 )
 
 type StrategyOutcomes struct {
@@ -13,29 +14,59 @@ type StrategyOutcomes struct {
 	SellDates     [] time.Time
 	FinalValue    float64
 	Positions     [] Position
+	Settings      map[string]string
 }
 
 type Position struct {
 	date     time.Time
 	numUnits float64
 	cash     float64
-
+	lastAction string
 }
 
-func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, firstAllowedBuyDate time.Time, dataFile string) *StrategyOutcomes {
 
-	// Get the stock data
-	pricesPtr := metric.ReadMetricFromYahooCsv(dataFile)
+// START_VALUE is how much money the strategy starts with when tracking trades
+var START_VALUE float64 = 1000
 
-	fmt.Println(pricesPtr)
+func RunBuyAndHold(firstAllowedBuyDate time.Time, pricesPtr *[]metric.Metric) *StrategyOutcomes {
+
+	buy := make([]time.Time, 0)
+	sell := make([]time.Time, 0)
+
+	// Work out the date of first purchase
+	inMarket := false
+	for i := 0 ; i < len(*pricesPtr) && !inMarket ; i++ {
+		if firstAllowedBuyDate.Before((*pricesPtr)[i].Time) || firstAllowedBuyDate.Equal((*pricesPtr)[i].Time){
+			buy = append(buy, (*pricesPtr)[i].Time)
+			inMarket = true;
+		}
+	}
+
+	outComes := StrategyOutcomes{buy, sell, 0.0, make([]Position, 0), make(map[string]string)}
+	calculateStrategyValue(&outComes, pricesPtr)
+
+	// Keep track of what we used
+	outComes.Settings["strategy"] = "buyAndHold"
+	outComes.Settings["firstAllowedBuy"] = firstAllowedBuyDate.String()
+
+	return &outComes
+}
+
+func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, firstAllowedBuyDate time.Time, pricesPtr *[]metric.Metric) *StrategyOutcomes {
 
 	buyDates, sellDates := calculateMovingAverageTxDates(fastAvgPeriod, slowAvgPeriod, firstAllowedBuyDate, pricesPtr)
 
 	fmt.Println("Buy", buyDates)
 	fmt.Println("Sell", sellDates)
 
-	outComes := StrategyOutcomes{*buyDates, *sellDates, 0.0, make([]Position, 0)}
+	outComes := StrategyOutcomes{*buyDates, *sellDates, 0.0, make([]Position, 0), make(map[string]string)}
 	calculateStrategyValue(&outComes, pricesPtr)
+
+	// Keep track of what we used
+	outComes.Settings["strategy"] = "movingAverageCrossover"
+	outComes.Settings["fastAvgPeriod"] = strconv.Itoa(fastAvgPeriod)
+	outComes.Settings["slowAvgPeriod"] = strconv.Itoa(slowAvgPeriod)
+	outComes.Settings["firstAllowedBuy"] = firstAllowedBuyDate.String()
 
 	return &outComes
 }
@@ -73,7 +104,7 @@ func calculateMovingAverageTxDates(fastAvgPeriod int, slowAvgPeriod int, firstAl
 
 func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.Metric) {
 
-	var value float64 = 1000.0
+	var value float64 = START_VALUE
 	var numShares float64 = 0.0
 	inMarket := false
 
@@ -91,7 +122,8 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 				numShares = value / (*pricesPtr)[j].Value
 				fmt.Printf("%v units purchased at %v for %v on %v\n",
 					numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
-				(*outcomesPtr).Positions = append((*outcomesPtr).Positions, Position{(*pricesPtr)[j].Time, numShares, 0})
+				(*outcomesPtr).Positions = append((*outcomesPtr).Positions,
+					Position{(*pricesPtr)[j].Time, numShares, 0, "buy"})
 			}
 		}
 		if !foundBuyPrice {
@@ -109,7 +141,8 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 					value = numShares * (*pricesPtr)[j].Value
 					fmt.Printf("%v units sold at %v for %v on %v\n",
 						numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
-					(*outcomesPtr).Positions = append((*outcomesPtr).Positions, Position{(*pricesPtr)[j].Time, 0, value})
+					(*outcomesPtr).Positions = append((*outcomesPtr).Positions,
+						Position{(*pricesPtr)[j].Time, 0, value, "sell"})
 				}
 			}
 			if !foundSellPrice {
