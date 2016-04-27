@@ -3,46 +3,47 @@ import (
 	"github.com/cruskit/finsight/strategy"
 	"github.com/cruskit/finsight/metric"
 	"time"
-	"fmt"
 )
 
 
-func RunMovingAverage(datafile string) {
+func RunMovingAverage(firstAllowedBuyDate time.Time, datafile string) *[]strategy.StrategyOutcomes {
 
 	outComes := make([]strategy.StrategyOutcomes, 0)
 
 	unitPrices := metric.ReadMetricFromYahooCsv(datafile)
 
-	for firstAvg := 50; firstAvg < 51; firstAvg ++ {
+	for firstAvg := 1; firstAvg < 400; firstAvg += 5 {
 
-		for secondAvg := 100; secondAvg < 400; secondAvg += 50 {
+		for secondAvg := firstAvg + 5; secondAvg < 400; secondAvg += 5 {
 
-			so := strategy.RunMovingAverageCrossover(firstAvg, secondAvg, time.Time{}, unitPrices)
+			so := strategy.RunMovingAverageCrossover(firstAvg, secondAvg, firstAllowedBuyDate, unitPrices)
 			outComes = append(outComes, *so)
 		}
 
 	}
 
-	fmt.Println()
-	for _, so := range (outComes){
-		fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
-	}
+	//fmt.Println()
+	//for _, so := range (outComes) {
+	//	fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
+	//}
+
+	return &outComes
 }
 
-func RunBuyAndHold(datafile string) {
+func RunBuyAndHold(firstAllowedBuyDate time.Time, datafile string) *[]strategy.StrategyOutcomes {
 	outComes := make([]strategy.StrategyOutcomes, 0)
 	unitPrices := metric.ReadMetricFromYahooCsv(datafile)
 
-	so := strategy.RunBuyAndHold(time.Time{}, unitPrices)
+	so := strategy.RunBuyAndHold(firstAllowedBuyDate, unitPrices)
 	outComes = append(outComes, *so)
 
-	fmt.Println()
-	for _, so := range (outComes){
-		fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
-	}
+	//fmt.Println()
+	//for _, so := range (outComes) {
+	//	fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
+	//}
 
+	return &outComes
 }
-
 
 
 

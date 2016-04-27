@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"sort"
+	"time"
 	"github.com/cruskit/finsight/scenario"
+	"github.com/cruskit/finsight/strategy"
 )
 
 func main() {
@@ -34,8 +37,27 @@ func main() {
 
 	//strategy.RunMovingAverageCrossover(2, 3, time.Time{}, "sampledata/movingaveragestrategy_test_data.csv")
 
-	scenario.RunMovingAverage("sampledata/ivv_history.csv")
-	scenario.RunBuyAndHold("sampledata/ivv_history.csv")
+	firstAllowedBuy := time.Time{}
+	//firstAllowedBuy := time.Date(2010, time.January, 1, 0, 0, 0, 0, time.UTC)
+
+	outComes := scenario.RunMovingAverage(firstAllowedBuy, "sampledata/ivv_history.csv")
+	buyAndHoldOutcomes := scenario.RunBuyAndHold(firstAllowedBuy, "sampledata/ivv_history.csv")
+
+	*outComes = append(*outComes, *buyAndHoldOutcomes...)
+
+	sort.Sort(StrategyValueSort(*outComes))
+
+	fmt.Println()
+	for _, so := range (*outComes) {
+		fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
+	}
 }
+
+
+
+type StrategyValueSort []strategy.StrategyOutcomes
+func (m StrategyValueSort) Len() int { return len(m) }
+func (m StrategyValueSort) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
+func (m StrategyValueSort) Less(i, j int) bool { return m[i].FinalValue < m[j].FinalValue }
 
 

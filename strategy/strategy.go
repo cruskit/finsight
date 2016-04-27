@@ -3,7 +3,6 @@ package strategy
 import (
 	"time"
 	"github.com/cruskit/finsight/metric"
-	"fmt"
 	"github.com/cruskit/finsight/analyser"
 	"log"
 	"strconv"
@@ -55,9 +54,6 @@ func RunBuyAndHold(firstAllowedBuyDate time.Time, pricesPtr *[]metric.Metric) *S
 func RunMovingAverageCrossover(fastAvgPeriod int, slowAvgPeriod int, firstAllowedBuyDate time.Time, pricesPtr *[]metric.Metric) *StrategyOutcomes {
 
 	buyDates, sellDates := calculateMovingAverageTxDates(fastAvgPeriod, slowAvgPeriod, firstAllowedBuyDate, pricesPtr)
-
-	fmt.Println("Buy", buyDates)
-	fmt.Println("Sell", sellDates)
 
 	outComes := StrategyOutcomes{*buyDates, *sellDates, 0.0, make([]Position, 0), make(map[string]string)}
 	calculateStrategyValue(&outComes, pricesPtr)
@@ -120,8 +116,8 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 			if ((*outcomesPtr).PurchaseDates[i].Equal((*pricesPtr)[j].Time)) {
 				foundBuyPrice = true
 				numShares = value / (*pricesPtr)[j].Value
-				fmt.Printf("%v units purchased at %v for %v on %v\n",
-					numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
+//				fmt.Printf("%v units purchased at %v for %v on %v\n",
+//					numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
 				(*outcomesPtr).Positions = append((*outcomesPtr).Positions,
 					Position{(*pricesPtr)[j].Time, numShares, 0, "buy"})
 			}
@@ -139,8 +135,8 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 				if ((*outcomesPtr).SellDates[i] == (*pricesPtr)[j].Time) {
 					foundSellPrice = true
 					value = numShares * (*pricesPtr)[j].Value
-					fmt.Printf("%v units sold at %v for %v on %v\n",
-						numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
+//					fmt.Printf("%v units sold at %v for %v on %v\n",
+//						numShares, (*pricesPtr)[j].Value, value, (*pricesPtr)[j].Time)
 					(*outcomesPtr).Positions = append((*outcomesPtr).Positions,
 						Position{(*pricesPtr)[j].Time, 0, value, "sell"})
 				}
@@ -154,10 +150,10 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 	// If we are still in the market, then sell on the last day to value the portfolio
 	if (inMarket) {
 		value = numShares * (*pricesPtr)[len((*pricesPtr)) - 1].Value
-		fmt.Printf("Cashing out: %v Shares sold at %v for %v on %v\n",
-			numShares, (*pricesPtr)[len(*pricesPtr) - 1].Value, value, (*pricesPtr)[len(*pricesPtr) - 1].Time)
+//		fmt.Printf("Cashing out: %v Shares sold at %v for %v on %v\n",
+//			numShares, (*pricesPtr)[len(*pricesPtr) - 1].Value, value, (*pricesPtr)[len(*pricesPtr) - 1].Time)
 	}
 
 	(*outcomesPtr).FinalValue = value
-	fmt.Printf("Final value: %v\n", (*outcomesPtr).FinalValue)
+//	fmt.Printf("Final value: %v\n", (*outcomesPtr).FinalValue)
 }
