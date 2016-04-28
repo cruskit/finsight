@@ -27,11 +27,3 @@ func RunStrategy(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
-
-type Todo struct {
-	Name      string    `json:"name"`
-	Completed bool      `json:"completed"`
-	Due       time.Time `json:"due"`
-}
-
-type Todos []Todo

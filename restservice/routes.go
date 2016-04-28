@@ -15,13 +15,13 @@ var routes = Routes{
 	Route{
 		"Index",
 		"GET",
-		"/",
+		"/finsight/",
 		Index,
 	},
 	Route{
 		"Index",
 		"GET",
-		"/strategy",
+		"/finsight/strategy",
 		RunStrategy,
 	},
 }
