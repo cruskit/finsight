@@ -9,18 +9,18 @@ import (
 )
 
 type StrategyOutcomes struct {
-	PurchaseDates [] time.Time
-	SellDates     [] time.Time
-	FinalValue    float64
-	Positions     [] Position
-	Settings      map[string]string
+	PurchaseDates [] time.Time `json:"purchaseDates"`
+	SellDates     [] time.Time `json:"sellDates"`
+	FinalValue    float64 `json:"finalValue"`
+	Positions     [] Position `json:"positions"`
+	Settings      map[string]string `json:"settings"`
 }
 
 type Position struct {
-	date     time.Time
-	numUnits float64
-	cash     float64
-	lastAction string
+	Date       time.Time `json:"date"`
+	NumUnits   float64 `json:"numUnits"`
+	Cash       float64 `json:"cash"`
+	LastAction string `json:"lastAction"`
 }
 
 

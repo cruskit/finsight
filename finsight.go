@@ -6,6 +6,9 @@ import (
 	"time"
 	"github.com/cruskit/finsight/scenario"
 	"github.com/cruskit/finsight/strategy"
+	"github.com/cruskit/finsight/restservice"
+	"net/http"
+	"log"
 )
 
 func main() {
@@ -37,27 +40,41 @@ func main() {
 
 	//strategy.RunMovingAverageCrossover(2, 3, time.Time{}, "sampledata/movingaveragestrategy_test_data.csv")
 
-	firstAllowedBuy := time.Time{}
-	//firstAllowedBuy := time.Date(2010, time.January, 1, 0, 0, 0, 0, time.UTC)
+	runSim := false
 
-	outComes := scenario.RunMovingAverage(firstAllowedBuy, "sampledata/ivv_history.csv")
-	buyAndHoldOutcomes := scenario.RunBuyAndHold(firstAllowedBuy, "sampledata/ivv_history.csv")
+	if (runSim) {
+		firstAllowedBuy := time.Time{}
+		//firstAllowedBuy := time.Date(2010, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	*outComes = append(*outComes, *buyAndHoldOutcomes...)
+		outComes := scenario.RunMovingAverage(firstAllowedBuy, "sampledata/ivv_history.csv")
+		buyAndHoldOutcomes := scenario.RunBuyAndHold(firstAllowedBuy, "sampledata/ivv_history.csv")
 
-	sort.Sort(StrategyValueSort(*outComes))
+		*outComes = append(*outComes, *buyAndHoldOutcomes...)
 
-	fmt.Println()
-	for _, so := range (*outComes) {
-		fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
+		sort.Sort(StrategyValueSort(*outComes))
+
+		fmt.Println()
+		for _, so := range (*outComes) {
+			fmt.Printf("Final value: %v, NumTrades, %v, Settings: %v\n", so.FinalValue, len(so.Positions), so.Settings)
+		}
+	}else {
+		router := restservice.NewRouter()
+		log.Fatal(http.ListenAndServe(":8080", router))
+
 	}
+
 }
 
-
-
 type StrategyValueSort []strategy.StrategyOutcomes
-func (m StrategyValueSort) Len() int { return len(m) }
-func (m StrategyValueSort) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
-func (m StrategyValueSort) Less(i, j int) bool { return m[i].FinalValue < m[j].FinalValue }
+
+func (m StrategyValueSort) Len() int {
+	return len(m)
+}
+func (m StrategyValueSort) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+func (m StrategyValueSort) Less(i, j int) bool {
+	return m[i].FinalValue < m[j].FinalValue
+}
 
 
