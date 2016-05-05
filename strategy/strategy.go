@@ -157,3 +157,28 @@ func calculateStrategyValue(outcomesPtr *StrategyOutcomes, pricesPtr *[]metric.M
 	(*outcomesPtr).FinalValue = value
 //	fmt.Printf("Final value: %v\n", (*outcomesPtr).FinalValue)
 }
+
+func CalculateDailyPortfolioValues(outcomes *StrategyOutcomes, pricesPtr *[]metric.Metric) *[] float64 {
+
+	var valuation [] float64
+	var currentPosition int = 0
+
+	for _, unitPrice := range(*pricesPtr){
+
+		if (currentPosition < (len(outcomes.Positions) - 1) && unitPrice.Time.Equal(outcomes.Positions[currentPosition+1].Date)){
+
+			currentPosition++
+		}
+
+		// Value the portfolio
+		if (currentPosition == 0 && unitPrice.Time.Before(outcomes.Positions[currentPosition].Date)){
+			valuation = append(valuation, START_VALUE)
+		}else{
+			var val = outcomes.Positions[currentPosition].Cash + (outcomes.Positions[currentPosition].NumUnits * unitPrice.Value)
+			valuation = append(valuation, val)
+		}
+
+
+	}
+	return &valuation;
+}
